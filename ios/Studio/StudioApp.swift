@@ -101,6 +101,15 @@ final class SiteLoader: NSObject, WKURLSchemeHandler {
     }
 }
 
+/// window.webkit.messageHandlers.haptic.postMessage("soft" | "light" | "medium" | "rigid")
+final class Haptics: NSObject, WKScriptMessageHandler {
+    private let styles: [String: UIImpactFeedbackGenerator.FeedbackStyle] =
+        ["soft": .soft, "light": .light, "medium": .medium, "rigid": .rigid, "heavy": .heavy]
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        UIImpactFeedbackGenerator(style: styles[message.body as? String ?? ""] ?? .soft).impactOccurred()
+    }
+}
+
 struct StudioWebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -121,6 +130,9 @@ struct StudioWebView: UIViewRepresentable {
             config.userContentController.addUserScript(
                 WKUserScript(source: js, injectionTime: .atDocumentStart, forMainFrameOnly: false))
         }
+
+        // Pages ask for a tap of the phone's haptic engine (the squishies use it).
+        config.userContentController.add(Haptics(), name: "haptic")
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
