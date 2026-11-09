@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>הסטודיו של יעל</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="הסטודיו">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Karantina:wght@700&display=swap">
+<style>
+/* Layout: the studio lobby. Logo + greeting, then one big door per game; each door shows her progress in that game. */
+:root{
+  --bg:#FFF3F6; --surface:#FFFFFF; --ink:#3A1838; --muted:#866180; --line:#F1D5E3;
+  --pink:#E8337F; --plum:#7A1E6C; --gold:#F2AE1C;
+  --shadow:0 10px 28px -14px rgba(120,20,80,.45);
+  --font-display:"Karantina","Fredoka",system-ui,sans-serif;
+  --font-body:"Fredoka","Rubik","Arial Hebrew",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170C20; --surface:#2A1636; --ink:#FBEAF3; --muted:#C6A4C4; --line:#4A2A5C; --shadow:0 10px 28px -14px rgba(0,0,0,.8); color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#170C20; --surface:#2A1636; --ink:#FBEAF3; --muted:#C6A4C4; --line:#4A2A5C; --shadow:0 10px 28px -14px rgba(0,0,0,.8); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:
+  radial-gradient(90% 40% at 50% -8%, color-mix(in srgb,var(--pink) 26%,transparent), transparent 70%),
+  var(--bg);color:var(--ink);font:17px/1.45 var(--font-body);-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-block:22px 28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;align-items:center;gap:14px}
+.logo{width:76px;height:76px;border-radius:22px;flex:none;box-shadow:var(--shadow)}
+header div{display:flex;flex-direction:column;min-width:0}
+.hello{color:var(--muted);font-weight:600}
+h1{margin:0;font-family:var(--font-display);font-weight:700;font-size:56px;line-height:.9;text-wrap:balance}
+.today{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;font-weight:500}
+.today b{color:var(--pink)}
+.doors{display:flex;flex-direction:column;gap:14px}
+.door{display:grid;grid-template-columns:112px 1fr;align-items:stretch;text-decoration:none;color:inherit;background:var(--surface);
+  border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:var(--shadow);transition:transform .12s;min-height:128px}
+.door:active{transform:scale(.97)}
+.door:focus-visible{outline:3px solid var(--pink);outline-offset:3px}
+.art{display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:46px;color:#fff;line-height:1;direction:ltr;text-align:center}
+.info{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:14px 16px;min-width:0}
+.info b{font-size:21px}
+.info .sub{color:var(--muted);font-size:15px}
+.prog{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:14px;font-weight:600}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:var(--c)}
+.soon{border-style:dashed;box-shadow:none;opacity:.75;pointer-events:none}
+.soon .art{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted);font-size:40px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="apple-touch-icon.png" alt="">
+    <div><span class="hello" id="hello">שלום יעל</span><h1>הסטודיו של יעל</h1></div>
+  </header>
+  <div class="today" id="today" hidden></div>
+  <nav class="doors" id="doors"></nav>
+</div>
+<script>
+// Every game lives on this same site, so the lobby can read each game's saved progress directly.
+const read=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const pad2=n=>String(n).padStart(2,'0');
+const todayKey=(d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()))(new Date());
+
+const GAMES=[
+  {href:'/kefel/',title:'הבמה של יעל',sub:'לוח הכפל',art:'7×8',bg:'linear-gradient(135deg,#7A1E6C,#E8337F 60%,#FF9A4D)',c:'#E8337F',
+   progress(){const s=read('yael-kefel-v1');if(!s)return null;const m=Object.values(s.facts||{}).filter(f=>f.box>=4).length;
+     return {pct:m/55,text:`★ ${s.stars||0} · שולטת ב-${m} מתוך 55`,today:(s.days||{})[todayKey]||0}}},
+  {href:'/milim/',title:'המילים של יעל',sub:'מילים באנגלית',art:'Aa',bg:'linear-gradient(135deg,#3d7bff,#6b9bff 55%,#ff5a36)',c:'#3d7bff',
+   progress(){const s=read('yael-words-v1');if(!s)return null;const m=Object.values(s.w||{}).filter(w=>w.l>=4).length;
+     return {pct:m/87,text:`יודעת ${m} מתוך 87 מילים`}}},
+];
+
+const h=new Date().getHours();
+document.getElementById('hello').textContent=h<5?'לילה טוב, יעל':h<12?'בוקר טוב, יעל':h<17?'צהריים טובים, יעל':h<21?'ערב טוב, יעל':'לילה טוב, יעל';
+
+document.getElementById('doors').innerHTML=GAMES.map(g=>{
+  const p=g.progress();
+  return `<a class="door" href="${g.href}" style="--c:${g.c}">
+    <span class="art" style="background:${g.bg}">${g.art}</span>
+    <span class="info"><b>${g.title}</b><span class="sub">${g.sub}</span>
+      ${p?`<span class="prog"><span>${p.text}</span><span class="bar"><i style="width:${Math.max(3,Math.round(p.pct*100))}%"></i></span></span>`:`<span class="prog">עוד לא התחלת. בואי ננסה!</span>`}
+    </span></a>`}).join('')+
+  `<div class="door soon" aria-hidden="true"><span class="art">+</span><span class="info"><b>משחק חדש</b><span class="sub">יגיע בקרוב לסטודיו</span></span></div>`;
+
+const k=GAMES[0].progress();
+if(k&&k.today){const t=document.getElementById('today');t.hidden=false;t.innerHTML=`היום כבר ענית על <b>${k.today}</b> תרגילי כפל. כל הכבוד!`}
+</script>
+</body>
+</html>

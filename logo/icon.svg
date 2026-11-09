@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7A1E6C"/>
+      <stop offset=".5" stop-color="#E8337F"/>
+      <stop offset="1" stop-color="#FF9A4D"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF6D8" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#FFF6D8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFE7A3"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <path d="M392 -20 L632 -20 L860 980 L164 980 Z" fill="url(#beam)"/>
+  <ellipse cx="512" cy="860" rx="300" ry="46" fill="#3A0A33" opacity=".28"/>
+  <path d="M512 214 L590 388 L780 406 L636 532 L679 718 L512 620 L345 718 L388 532 L244 406 L434 388 Z"
+        fill="url(#star)" stroke="url(#star)" stroke-width="64" stroke-linejoin="round"/>
+  <path d="M512 410 L527 446 L566 449 L536 474 L545 512 L512 492 L479 512 L488 474 L458 449 L497 446 Z" fill="#E8337F" stroke="#E8337F" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M206 236 q10 -46 20 0 q46 10 0 20 q-10 46 -20 0 q-46 -10 0 -20Z" fill="#FFF6D8"/>
+  <path d="M808 196 q8 -36 16 0 q36 8 0 16 q-8 36 -16 0 q-36 -8 0 -16Z" fill="#FFF6D8"/>
+  <path d="M826 640 q7 -30 14 0 q30 7 0 14 q-7 30 -14 0 q-30 -7 0 -14Z" fill="#FFF6D8" opacity=".85"/>
+</svg>
