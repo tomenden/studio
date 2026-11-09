@@ -3,6 +3,10 @@ options:
   bundleIdPrefix: com.tomenden
   deploymentTarget:
     iOS: "17.0"
+# Local.xcconfig is git-ignored and holds KID_SYNC_CODE (her progress-sync code).
+configFiles:
+  Debug: Local.xcconfig
+  Release: Local.xcconfig
 settings:
   base:
     DEVELOPMENT_TEAM: Q3VTL5U3XB
@@ -10,7 +14,6 @@ settings:
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
-    KID_SYNC_CODE: ""
 targets:
   Studio:
     type: application

@@ -15,7 +15,7 @@ Yael's learning games in one place.
 
 1. Connect the phone by cable, unlock it, tap **Trust**.
 2. On the phone: Settings → Privacy & Security → **Developer Mode** → on (the phone restarts).
-3. Run `ios/install.sh`.
+3. Run `ios/install.sh`, or press ▶ in Xcode with her phone selected. Both read her sync code from `ios/Local.xcconfig` (git-ignored, one line: `KID_SYNC_CODE = <code>`).
 4. On the phone: Screen Time → Always Allowed → add **הסטודיו**.
 
 Development signing lasts a year. When the app stops opening, run step 3 again.

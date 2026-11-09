@@ -12,6 +12,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		09FA8264F3EA9785E10EE1B4 /* Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig; sourceTree = "<group>"; };
 		11477443AA4E32E96F22130D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		59F761F12D167078B895425C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9978EAA2BC7BFDCC0D01B7B1 /* Studio.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Studio.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -40,9 +41,19 @@
 		9E4B858192D345A140C00863 = {
 			isa = PBXGroup;
 			children = (
+				A632C4D5E755C2AD14EDF4ED /* ios */,
 				8206E557A4D55CB91C8C3818 /* Studio */,
 				7E233FFC1CB42D482C6A2FA9 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		A632C4D5E755C2AD14EDF4ED /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				09FA8264F3EA9785E10EE1B4 /* Local.xcconfig */,
+			);
+			name = ios;
+			path = .;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,6 +168,7 @@
 		};
 		53F811D4AB40BF6A965EA7F5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 09FA8264F3EA9785E10EE1B4 /* Local.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -224,6 +236,7 @@
 		};
 		77DACFFFF2FB7286F1E88F9B /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 09FA8264F3EA9785E10EE1B4 /* Local.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

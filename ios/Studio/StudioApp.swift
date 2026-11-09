@@ -3,10 +3,16 @@ import WebKit
 
 // A thin shell around the studio website. The games themselves live on GitHub Pages,
 // so updating a game never needs a new build of this app.
+//
+// Pages open under the app's own address, studio://app/<path>. Every request for it comes to
+// SiteLoader below, which fetches the same file from https://tomenden.github.io/<path>.
+// Screen Time limits websites by the address a page opens at, so with no web address
+// there is no website to count against her daily limit (the app itself is "Always Allowed").
 
-let home = URL(string: "https://tomenden.github.io/studio/")!
-let gamesURL = URL(string: "https://tomenden.github.io/studio/games.json")!
-let host = "tomenden.github.io"
+let site = "https://tomenden.github.io"
+let scheme = "studio"
+let home = URL(string: "studio://app/studio/")!
+let gamesURL = URL(string: "\(site)/studio/games.json")!
 
 @main
 struct StudioApp: App {
@@ -41,11 +47,57 @@ enum Allow {
         }.resume()
     }
 
-    static func permits(_ url: URL) -> Bool {
-        if url.scheme == "about" { return true }
-        guard url.scheme == "https", url.host == host else { return false }
-        let path = url.path.hasSuffix("/") ? url.path : url.path + "/"
-        return paths.contains { path.hasPrefix($0) }
+    static func permitsPath(_ path: String) -> Bool {
+        let p = path.hasSuffix("/") ? path : path + "/"
+        return paths.contains { p.hasPrefix($0) }
+    }
+}
+
+/// Serves studio://app/<path> from the website. Keeps a copy (URLCache), so a game opened once
+/// still works without internet.
+final class SiteLoader: NSObject, WKURLSchemeHandler {
+    private var live = Set<ObjectIdentifier>()   // tasks WebKit hasn't stopped; touched on the main thread only
+
+    func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
+        guard let url = task.request.url, let remote = URL(string: site + url.path + (url.query.map { "?" + $0 } ?? "")) else {
+            return task.didFailWithError(URLError(.badURL))
+        }
+        let id = ObjectIdentifier(task)
+        live.insert(id)
+        // Pages and the game list revalidate so updates show up; other files use normal caching.
+        let page = url.path.hasSuffix("/") || url.path.hasSuffix(".html") || url.path.hasSuffix(".json")
+        fetch(remote, policy: page ? .reloadRevalidatingCacheData : .useProtocolCachePolicy) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self, self.live.remove(id) != nil else { return }
+                switch result {
+                case .success(let (data, http)):
+                    var headers = ["Content-Type": http.value(forHTTPHeaderField: "Content-Type") ?? "application/octet-stream",
+                                   "Cache-Control": "no-cache"]
+                    if http.statusCode >= 400 { headers["Content-Type"] = "text/plain" }
+                    let response = HTTPURLResponse(url: url, statusCode: http.statusCode, httpVersion: "HTTP/1.1", headerFields: headers)!
+                    task.didReceive(response)
+                    task.didReceive(data)
+                    task.didFinish()
+                case .failure(let error):
+                    task.didFailWithError(error)
+                }
+            }
+        }
+    }
+
+    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {
+        live.remove(ObjectIdentifier(task))
+    }
+
+    /// Network first; when offline, fall back to the saved copy.
+    private func fetch(_ url: URL, policy: URLRequest.CachePolicy, done: @escaping (Result<(Data, HTTPURLResponse), Error>) -> Void) {
+        URLSession.shared.dataTask(with: URLRequest(url: url, cachePolicy: policy)) { data, response, error in
+            if let data, let http = response as? HTTPURLResponse { return done(.success((data, http))) }
+            URLSession.shared.dataTask(with: URLRequest(url: url, cachePolicy: .returnCacheDataDontLoad)) { data, response, _ in
+                if let data, let http = response as? HTTPURLResponse { done(.success((data, http))) }
+                else { done(.failure(error ?? URLError(.notConnectedToInternet))) }
+            }.resume()
+        }.resume()
     }
 }
 
@@ -53,12 +105,15 @@ struct StudioWebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeUIView(context: Context) -> WKWebView {
+        URLCache.shared = URLCache(memoryCapacity: 20 << 20, diskCapacity: 200 << 20)
+
         let config = WKWebViewConfiguration()
+        config.setURLSchemeHandler(SiteLoader(), forURLScheme: scheme)
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         // The games look for "YaelStudio" to show their "back to the studio" button.
         config.applicationNameForUserAgent = "Mobile/15E148 YaelStudio/1"
-        // Her progress-sync code, baked in at install time (kept out of the public repo).
+        // Her progress-sync code, baked in at build time from the git-ignored Local.xcconfig.
         // The games read it from localStorage, so she never has to type it.
         if let code = Bundle.main.object(forInfoDictionaryKey: "KidSyncCode") as? String,
            code.range(of: "^[a-z0-9-]{6,40}$", options: .regularExpression) != nil {
@@ -81,8 +136,7 @@ struct StudioWebView: UIViewRepresentable {
         #endif
 
         Allow.refresh()
-        // Revalidate on launch so a game updated on the site shows up right away.
-        web.load(URLRequest(url: home, cachePolicy: .reloadRevalidatingCacheData))
+        web.load(URLRequest(url: home))
         return web
     }
 
@@ -92,13 +146,26 @@ struct StudioWebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             guard let url = action.request.url else { return decisionHandler(.cancel) }
-            decisionHandler(Allow.permits(url) ? .allow : .cancel)
+            switch url.scheme {
+            case "about":
+                decisionHandler(.allow)
+            case scheme:
+                decisionHandler(Allow.permitsPath(url.path) ? .allow : .cancel)
+            case "https" where url.host == "tomenden.github.io" && Allow.permitsPath(url.path):
+                // A full web link to one of the games opens under the app's own address instead.
+                decisionHandler(.cancel)
+                var c = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+                c.scheme = scheme; c.host = "app"
+                if let local = c.url { webView.load(URLRequest(url: local)) }
+            default:
+                decisionHandler(.cancel)
+            }
         }
 
         // Links that ask for a new window open in place, under the same rules.
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                      for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-            if let url = action.request.url, Allow.permits(url) { webView.load(action.request) }
+            if let url = action.request.url, url.scheme == scheme, Allow.permitsPath(url.path) { webView.load(action.request) }
             return nil
         }
 
@@ -126,6 +193,6 @@ a{background:#E8337F;color:#fff;text-decoration:none;font-weight:700;padding:14p
 </style></head><body>
 <b>אין חיבור לאינטרנט</b>
 <span>הסטודיו צריך אינטרנט כדי לפתוח את המשחקים.<br>אפשר לבדוק את ה-Wi-Fi ולנסות שוב.</span>
-<a href="https://tomenden.github.io/studio/">לנסות שוב</a>
+<a href="studio://app/studio/">לנסות שוב</a>
 </body></html>
 """

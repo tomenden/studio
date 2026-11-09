@@ -22,6 +22,8 @@
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>KidSyncCode</key>
+	<string>$(KID_SYNC_CODE)</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
