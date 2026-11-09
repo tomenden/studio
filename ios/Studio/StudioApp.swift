@@ -5,7 +5,7 @@ import WebKit
 // so updating a game never needs a new build of this app.
 
 let home = URL(string: "https://tomenden.github.io/studio/")!
-let allowListURL = URL(string: "https://tomenden.github.io/studio/allow.json")!
+let gamesURL = URL(string: "https://tomenden.github.io/studio/games.json")!
 let host = "tomenden.github.io"
 
 @main
@@ -18,17 +18,22 @@ struct StudioApp: App {
 }
 
 /// Only the studio and its games may open — otherwise the app would be a browser that skips Screen Time.
-/// The list comes from allow.json on the site, so a new game is allowed without rebuilding the app.
+/// The list comes from games.json on the site (every game not marked "hidden"), so adding,
+/// archiving or hiding a game is a change on the site, never a new build.
 enum Allow {
     static let defaultsKey = "allowedPaths"
     static var paths: [String] = UserDefaults.standard.stringArray(forKey: defaultsKey) ?? ["/studio/", "/kefel/", "/milim/"]
 
     static func refresh() {
-        let req = URLRequest(url: allowListURL, cachePolicy: .reloadIgnoringLocalCacheData)
+        let req = URLRequest(url: gamesURL, cachePolicy: .reloadIgnoringLocalCacheData)
         URLSession.shared.dataTask(with: req) { data, _, _ in
             guard let data,
-                  let list = try? JSONDecoder().decode([String: [String]].self, from: data)["paths"],
-                  !list.isEmpty else { return }
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let games = root["games"] as? [[String: Any]] else { return }
+            let list = ["/studio/"] + games.compactMap { g -> String? in
+                guard (g["status"] as? String) != "hidden", let href = g["href"] as? String else { return nil }
+                return href.hasSuffix("/") ? href : href + "/"
+            }
             DispatchQueue.main.async {
                 paths = list
                 UserDefaults.standard.set(list, forKey: defaultsKey)

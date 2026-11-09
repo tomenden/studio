@@ -48,8 +48,9 @@ h1{margin:0;font-family:var(--font-display);font-weight:700;font-size:56px;line-
 .prog{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:14px;font-weight:600}
 .bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:inherit;background:var(--c)}
-.soon{border-style:dashed;box-shadow:none;opacity:.75;pointer-events:none}
-.soon .art{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted);font-size:40px}
+.archive summary{cursor:pointer;color:var(--muted);font-weight:600;padding:6px 4px}
+.archive .doors{margin-top:10px}
+.archive .door{opacity:.8;min-height:104px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -68,29 +69,40 @@ const read=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return nu
 const pad2=n=>String(n).padStart(2,'0');
 const todayKey=(d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()))(new Date());
 
-const GAMES=[
-  {href:'/kefel/',title:'הבמה של יעל',sub:'לוח הכפל',art:'7×8',bg:'linear-gradient(135deg,#7A1E6C,#E8337F 60%,#FF9A4D)',c:'#E8337F',
-   progress(){const s=read('yael-kefel-v1');if(!s)return null;const m=Object.values(s.facts||{}).filter(f=>f.box>=4).length;
-     return {pct:m/55,text:`★ ${s.stars||0} · שולטת ב-${m} מתוך 55`,today:(s.days||{})[todayKey]||0}}},
-  {href:'/milim/',title:'המילים של יעל',sub:'מילים באנגלית',art:'Aa',bg:'linear-gradient(135deg,#3d7bff,#6b9bff 55%,#ff5a36)',c:'#3d7bff',
-   progress(){const s=read('yael-words-v1');if(!s)return null;const m=Object.values(s.w||{}).filter(w=>w.l>=4).length;
-     return {pct:m/87,text:`יודעת ${m} מתוך 87 מילים`}}},
-];
+// What the lobby shows is controlled by games.json: status "active" (shown), "archive" (under ארכיון), "hidden" (gone, and the app won't open it).
+const PROGRESS={
+  kefel(){const s=read('yael-kefel-v1');if(!s)return null;const m=Object.values(s.facts||{}).filter(f=>f.box>=4).length;
+    return {pct:m/55,text:`★ ${s.stars||0} · שולטת ב-${m} מתוך 55`,today:(s.days||{})[todayKey]||0}},
+  milim(){const s=read('yael-words-v1');if(!s)return null;const m=Object.values(s.w||{}).filter(w=>w.l>=4).length;
+    return {pct:m/87,text:`יודעת ${m} מתוך 87 מילים`}},
+};
+// A game without a built-in reader can save {pct, text} under "studio:<id>".
+const progressOf=id=>(PROGRESS[id]||(()=>read('studio:'+id)))();
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const door=g=>{
+  const p=progressOf(g.id),[a,b,c]=g.colors||['#7A1E6C','#E8337F','#FF9A4D'];
+  return `<a class="door" href="${esc(g.href)}" style="--c:${esc(b)}">
+    <span class="art" style="background:linear-gradient(135deg,${esc(a)},${esc(b)} 55%,${esc(c)})">${esc(g.art||'★')}</span>
+    <span class="info"><b>${esc(g.title)}</b><span class="sub">${esc(g.sub||'')}</span>
+      ${p?`<span class="prog"><span>${esc(p.text)}</span><span class="bar"><i style="width:${Math.max(3,Math.round((p.pct||0)*100))}%"></i></span></span>`:`<span class="prog">עוד לא התחלת. בואי ננסה!</span>`}
+    </span></a>`;
+};
+function render(games){
+  const act=games.filter(g=>g.status==='active'),arc=games.filter(g=>g.status==='archive');
+  document.getElementById('doors').innerHTML=act.map(door).join('')+
+    (arc.length?`<details class="archive"><summary>ארכיון (${arc.length})</summary><div class="doors">${arc.map(door).join('')}</div></details>`:'');
+  const k=act.some(g=>g.id==='kefel')&&progressOf('kefel');
+  const t=document.getElementById('today');t.hidden=!(k&&k.today);
+  if(k&&k.today)t.innerHTML=`היום כבר ענית על <b>${k.today}</b> תרגילי כפל. כל הכבוד!`;
+}
+// Last known list renders at once (works offline); the fresh list replaces it.
+const cached=read('studio-games');if(cached)render(cached);
+fetch('games.json',{cache:'no-cache'}).then(r=>r.json()).then(j=>{
+  try{localStorage.setItem('studio-games',JSON.stringify(j.games))}catch(e){}render(j.games)}).catch(()=>{});
 
 const h=new Date().getHours();
 document.getElementById('hello').textContent=h<5?'לילה טוב, יעל':h<12?'בוקר טוב, יעל':h<17?'צהריים טובים, יעל':h<21?'ערב טוב, יעל':'לילה טוב, יעל';
 
-document.getElementById('doors').innerHTML=GAMES.map(g=>{
-  const p=g.progress();
-  return `<a class="door" href="${g.href}" style="--c:${g.c}">
-    <span class="art" style="background:${g.bg}">${g.art}</span>
-    <span class="info"><b>${g.title}</b><span class="sub">${g.sub}</span>
-      ${p?`<span class="prog"><span>${p.text}</span><span class="bar"><i style="width:${Math.max(3,Math.round(p.pct*100))}%"></i></span></span>`:`<span class="prog">עוד לא התחלת. בואי ננסה!</span>`}
-    </span></a>`}).join('')+
-  `<div class="door soon" aria-hidden="true"><span class="art">+</span><span class="info"><b>משחק חדש</b><span class="sub">יגיע בקרוב לסטודיו</span></span></div>`;
-
-const k=GAMES[0].progress();
-if(k&&k.today){const t=document.getElementById('today');t.hidden=false;t.innerHTML=`היום כבר ענית על <b>${k.today}</b> תרגילי כפל. כל הכבוד!`}
 </script>
 </body>
 </html>

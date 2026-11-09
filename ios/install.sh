@@ -11,7 +11,7 @@ udid=$(python3 - "$json" <<'EOF'
 import json, sys
 devs = json.load(open(sys.argv[1]))["result"]["devices"]
 phones = [d for d in devs
-          if d["hardwareProperties"].get("platform") == "iOS"
+          if d["hardwareProperties"].get("deviceType") == "iPhone"
           and d["connectionProperties"].get("transportType") == "wired"]
 print(phones[0]["hardwareProperties"]["udid"] if phones else "")
 EOF

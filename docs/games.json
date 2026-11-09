@@ -1,0 +1,22 @@
+{
+  "games": [
+    {
+      "id": "kefel",
+      "href": "/kefel/",
+      "title": "הבמה של יעל",
+      "sub": "לוח הכפל",
+      "art": "7×8",
+      "colors": ["#7A1E6C", "#E8337F", "#FF9A4D"],
+      "status": "active"
+    },
+    {
+      "id": "milim",
+      "href": "/milim/",
+      "title": "המילים של יעל",
+      "sub": "מילים באנגלית",
+      "art": "Aa",
+      "colors": ["#3d7bff", "#6b9bff", "#ff5a36"],
+      "status": "active"
+    }
+  ]
+}
