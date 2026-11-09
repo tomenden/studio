@@ -70,14 +70,15 @@ const pad2=n=>String(n).padStart(2,'0');
 const todayKey=(d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()))(new Date());
 
 // What the lobby shows is controlled by games.json: status "active" (shown), "archive" (under ארכיון), "hidden" (gone, and the app won't open it).
+const LOCAL={kefel:'yael-kefel-v1',milim:'yael-words-v1'},REMOTE={};
 const PROGRESS={
-  kefel(){const s=read('yael-kefel-v1');if(!s)return null;const m=Object.values(s.facts||{}).filter(f=>f.box>=4).length;
+  kefel(s){if(!s)return null;const m=Object.values(s.facts||{}).filter(f=>f.box>=4).length;
     return {pct:m/55,text:`★ ${s.stars||0} · שולטת ב-${m} מתוך 55`,today:(s.days||{})[todayKey]||0}},
-  milim(){const s=read('yael-words-v1');if(!s)return null;const m=Object.values(s.w||{}).filter(w=>w.l>=4).length;
+  milim(s){if(!s)return null;const m=Object.values(s.w||{}).filter(w=>w.l>=4).length;
     return {pct:m/87,text:`יודעת ${m} מתוך 87 מילים`}},
 };
 // A game without a built-in reader can save {pct, text} under "studio:<id>".
-const progressOf=id=>(PROGRESS[id]||(()=>read('studio:'+id)))();
+const progressOf=id=>PROGRESS[id]?PROGRESS[id](REMOTE[id]||read(LOCAL[id])):read('studio:'+id);
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const door=g=>{
   const p=progressOf(g.id),[a,b,c]=g.colors||['#7A1E6C','#E8337F','#FF9A4D'];
@@ -98,7 +99,16 @@ function render(games){
 // Last known list renders at once (works offline); the fresh list replaces it.
 const cached=read('studio-games');if(cached)render(cached);
 fetch('games.json',{cache:'no-cache'}).then(r=>r.json()).then(j=>{
-  try{localStorage.setItem('studio-games',JSON.stringify(j.games))}catch(e){}render(j.games)}).catch(()=>{});
+  try{localStorage.setItem('studio-games',JSON.stringify(j.games))}catch(e){}render(j.games);loadRemote(j.games)}).catch(()=>{});
+// Progress synced from any device (the app, Safari, WhatsApp) wins over this browser's copy.
+async function loadRemote(games){
+  let code=null;try{code=localStorage.getItem('kidsync-code')}catch(e){}
+  if(!code)return;
+  await Promise.all(Object.keys(PROGRESS).map(async id=>{
+    try{const r=await fetch(`https://kids-sync.enden-tom.workers.dev/${id}/${code}`,{cache:'no-store'});if(r.ok)REMOTE[id]=await r.json()}catch(e){}
+  }));
+  render(games);
+}
 
 const h=new Date().getHours();
 document.getElementById('hello').textContent=h<5?'לילה טוב, יעל':h<12?'בוקר טוב, יעל':h<17?'צהריים טובים, יעל':h<21?'ערב טוב, יעל':'לילה טוב, יעל';

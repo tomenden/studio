@@ -58,6 +58,14 @@ struct StudioWebView: UIViewRepresentable {
         config.mediaTypesRequiringUserActionForPlayback = []
         // The games look for "YaelStudio" to show their "back to the studio" button.
         config.applicationNameForUserAgent = "Mobile/15E148 YaelStudio/1"
+        // Her progress-sync code, baked in at install time (kept out of the public repo).
+        // The games read it from localStorage, so she never has to type it.
+        if let code = Bundle.main.object(forInfoDictionaryKey: "KidSyncCode") as? String,
+           code.range(of: "^[a-z0-9-]{6,40}$", options: .regularExpression) != nil {
+            let js = "try{localStorage.setItem('kidsync-code','\(code)')}catch(e){}"
+            config.userContentController.addUserScript(
+                WKUserScript(source: js, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+        }
 
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator

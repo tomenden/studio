@@ -22,9 +22,13 @@ if [ -z "$udid" ]; then
 fi
 echo "Installing on $udid"
 
+# Her sync code: from KID_SYNC_CODE, or from ios/.kid-code (git-ignored).
+code="${KID_SYNC_CODE:-$(cat .kid-code 2>/dev/null || true)}"
+[ -n "$code" ] || echo "Warning: no sync code (ios/.kid-code). Progress will stay on the phone only."
+
 xcodegen generate >/dev/null
 xcodebuild -project Studio.xcodeproj -scheme Studio -configuration Release \
   -destination "id=$udid" -derivedDataPath build \
-  -allowProvisioningUpdates -allowProvisioningDeviceRegistration build -quiet
+  -allowProvisioningUpdates -allowProvisioningDeviceRegistration KID_SYNC_CODE="$code" build -quiet
 xcrun devicectl device install app --device "$udid" build/Build/Products/Release-iphoneos/Studio.app
 echo "Done. On the phone: Screen Time > Always Allowed > add הסטודיו"
