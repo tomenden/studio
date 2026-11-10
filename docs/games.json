@@ -4,9 +4,13 @@
       "id": "kefel",
       "href": "/kefel/",
       "title": "הבמה של יעל",
-      "sub": "לוח הכפל",
+      "sub": "לוח הכפל וסדר פעולות",
       "art": "7×8",
-      "colors": ["#7A1E6C", "#E8337F", "#FF9A4D"],
+      "colors": [
+        "#7A1E6C",
+        "#E8337F",
+        "#FF9A4D"
+      ],
       "status": "active"
     },
     {
@@ -15,7 +19,11 @@
       "title": "המילים של יעל",
       "sub": "מילים באנגלית",
       "art": "Aa",
-      "colors": ["#3d7bff", "#6b9bff", "#ff5a36"],
+      "colors": [
+        "#3d7bff",
+        "#6b9bff",
+        "#ff5a36"
+      ],
       "status": "active"
     }
   ]

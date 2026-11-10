@@ -73,7 +73,8 @@ const todayKey=(d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()
 const LOCAL={kefel:'yael-kefel-v1',milim:'yael-words-v1'},REMOTE={};
 const PROGRESS={
   kefel(s){if(!s)return null;const m=Object.values(s.facts||{}).filter(f=>f.box>=4).length;
-    return {pct:m/55,text:`★ ${s.stars||0} · שולטת ב-${m} מתוך 55`,today:(s.days||{})[todayKey]||0}},
+    const o=Object.values(s.ops||{}).filter(f=>f.box>=4).length;
+    return {pct:(m+o)/76,text:`★ ${s.stars||0} · כפל ${m}/55${o?` · סדר פעולות ${o}/21`:''}`,today:(s.days||{})[todayKey]||0}},
   milim(s){if(!s)return null;const m=Object.values(s.w||{}).filter(w=>w.l>=4).length;
     return {pct:m/87,text:`יודעת ${m} מתוך 87 מילים`}},
 };
